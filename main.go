@@ -7,6 +7,8 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"log"
 	"net/http"
+	"sort"
+	"strconv"
 )
 
 func main() {
@@ -19,16 +21,33 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		v, _ := mem.VirtualMemory()
-		host, _ := host.Info()
+		hostinfo, _ := host.Info()
 
-		_, _ = fmt.Fprintf(w, "Memory: Total: %v, Free:%v, UsedPercent:%f%%\n", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
+		minfo := fmt.Sprintf("Memory: Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
 
-		_, _ = fmt.Fprintln(w, "Host:", host)
+		info := map[string]string{
 
-		_, _ = fmt.Fprintln(w, "Host:", r.Host)
-		_, _ = fmt.Fprintln(w, "RemoteAddr:", r.RemoteAddr)
+			"Host.Id":        hostinfo.HostID,
+			"Host.Os":        hostinfo.OS,
+			"Host.Hostname":  hostinfo.Hostname,
+			"Host.Uptime":    strconv.FormatUint(hostinfo.Uptime, 10),
+			"Host.Procs":     strconv.FormatUint(hostinfo.Procs, 10),
+			"Host.Platform":  fmt.Sprintf("%s %s", hostinfo.Platform, hostinfo.PlatformVersion),
+			"Memory":         minfo,
+			"Request.Host":   r.Host,
+			"Request.Addr":   r.RemoteAddr,
+		}
 
-		_, _ = fmt.Fprintln(w, r.Method, r.RequestURI)
+		var keys []string
+		for k := range info {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			_, _ = fmt.Fprintln(w, k, " \t ", info[k])
+		}
+
 	})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
