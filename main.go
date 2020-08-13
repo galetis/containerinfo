@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"os"
+	"runtime"
 )
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 
 		info := map[string]string{
 
+			"Go.Version":     runtime.Version(),
 			"Host.Id":        hostinfo.HostID,
 			"Host.Os":        hostinfo.OS,
 			"Host.Hostname":  hostinfo.Hostname,
