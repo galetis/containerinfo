@@ -18,8 +18,10 @@ func main() {
 	
 	i, err := strconv.Atoi(os.Getenv("PORT"))
         if err != nil {
-	    port = i
+		log.Fatal(err)
         }
+	
+	port = i
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
