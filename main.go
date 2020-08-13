@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
