@@ -12,11 +12,13 @@ import (
 )
 
 func main() {
-	var port int
-
-	flag.IntVar(&port, "port", 80, "listen port")
-
-	flag.Parse()
+	port := 80
+	defaultPort := os.Getenv("PORT")
+	
+	i, err := strconv.Atoi(s)
+        if err != nil {
+	    port = i
+        }
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
