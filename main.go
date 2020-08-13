@@ -13,9 +13,8 @@ import (
 
 func main() {
 	port := 80
-	defaultPort := os.Getenv("PORT")
 	
-	i, err := strconv.Atoi(s)
+	i, err := strconv.Atoi(os.Getenv("PORT"))
         if err != nil {
 	    port = i
         }
