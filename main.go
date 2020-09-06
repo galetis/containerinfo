@@ -14,15 +14,12 @@ import (
 
 func main() {
 	port := 80
-	
-	log.Println("Port", os.Getenv("PORT"))
-	
+		
 	i, err := strconv.Atoi(os.Getenv("PORT"))
-        if err != nil {
-		log.Fatal(err)
+        if err == nil {
+		port = i
         }
-	port = i
-
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		v, _ := mem.VirtualMemory()
