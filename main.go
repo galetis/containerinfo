@@ -21,7 +21,6 @@ func main() {
         if err != nil {
 		log.Fatal(err)
         }
-	
 	port = i
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
