@@ -20,6 +20,8 @@ func main() {
 		port = i
         }
 	
+	log.Printf("Listening on: %d", port)
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		v, _ := mem.VirtualMemory()
