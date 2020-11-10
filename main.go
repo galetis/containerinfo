@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -35,8 +36,7 @@ func main() {
 		fmt.Fprintln(w, "Request.Host \t "+r.Host)
 		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
 
-
-		fmt.Fprintln(w, "Uptime \t\t "+ time.Now().Sub(start).String())
+		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
 	})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
@@ -49,8 +49,9 @@ func printInfo(w io.Writer) {
 	minfo := fmt.Sprintf("Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
 
 	info := map[string]string{
-
+		"Environ":       strings.Join(os.Environ(), " - "),
 		"Go.Version":    runtime.Version(),
+		"Go.NumCpu":     strconv.Itoa(runtime.NumCPU()),
 		"Host.Id":       hostinfo.HostID,
 		"Host.Os":       hostinfo.OS,
 		"Host.Hostname": hostinfo.Hostname,
