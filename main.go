@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -20,6 +21,8 @@ func main() {
 	if err == nil {
 		port = i
 	}
+
+	start := time.Now()
 
 	log.Printf("Listening on: %d", port)
 
@@ -31,6 +34,9 @@ func main() {
 		fmt.Fprint(w, "\n")
 		fmt.Fprintln(w, "Request.Host \t "+r.Host)
 		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
+
+
+		fmt.Fprintln(w, "Uptime \t\t "+ time.Now().Sub(start).String())
 	})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
@@ -40,7 +46,7 @@ func printInfo(w io.Writer) {
 	v, _ := mem.VirtualMemory()
 	hostinfo, _ := host.Info()
 
-	minfo := fmt.Sprintf("Memory: Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
+	minfo := fmt.Sprintf("Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
 
 	info := map[string]string{
 
