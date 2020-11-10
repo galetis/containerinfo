@@ -4,58 +4,65 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
+	"io"
 	"log"
 	"net/http"
-	"sort"
-	"strconv"
 	"os"
 	"runtime"
+	"sort"
+	"strconv"
 )
 
 func main() {
 	port := 80
-		
+
 	i, err := strconv.Atoi(os.Getenv("PORT"))
-        if err == nil {
+	if err == nil {
 		port = i
-        }
-	
+	}
+
 	log.Printf("Listening on: %d", port)
-	
+
+	printInfo(os.Stdout)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		v, _ := mem.VirtualMemory()
-		hostinfo, _ := host.Info()
-
-		minfo := fmt.Sprintf("Memory: Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
-
-		info := map[string]string{
-
-			"Go.Version":     runtime.Version(),
-			"Host.Id":        hostinfo.HostID,
-			"Host.Os":        hostinfo.OS,
-			"Host.Hostname":  hostinfo.Hostname,
-			"Host.Uptime":    strconv.FormatUint(hostinfo.Uptime, 10),
-			"Host.Procs":     strconv.FormatUint(hostinfo.Procs, 10),
-			"Host.Platform":  fmt.Sprintf("%s %s", hostinfo.Platform, hostinfo.PlatformVersion),
-			"Memory":         minfo,
-			"Request.Host":   r.Host,
-			"Request.Addr":   r.RemoteAddr,
-		}
-
-		var keys []string
-		for k := range info {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			_, _ = fmt.Fprintln(w, k, " \t ", info[k])
-		}
-
+		printInfo(w)
+		fmt.Fprint(w, "\n")
+		fmt.Fprintln(w, "Request.Host \t "+r.Host)
+		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
 	})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+}
+
+func printInfo(w io.Writer) {
+	v, _ := mem.VirtualMemory()
+	hostinfo, _ := host.Info()
+
+	minfo := fmt.Sprintf("Memory: Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
+
+	info := map[string]string{
+
+		"Go.Version":    runtime.Version(),
+		"Host.Id":       hostinfo.HostID,
+		"Host.Os":       hostinfo.OS,
+		"Host.Hostname": hostinfo.Hostname,
+		"Host.Uptime":   strconv.FormatUint(hostinfo.Uptime, 10),
+		"Host.Procs":    strconv.FormatUint(hostinfo.Procs, 10),
+		"Host.Platform": fmt.Sprintf("%s %s", hostinfo.Platform, hostinfo.PlatformVersion),
+		"Memory":        minfo,
+	}
+
+	var keys []string
+	for k := range info {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		_, _ = fmt.Fprintln(w, k, " \t ", info[k])
+	}
 }
 
 func ByteCountDecimal(b uint64) string {
