@@ -39,6 +39,23 @@ func main() {
 		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
 	})
 
+	http.HandleFunc("/load", func(w http.ResponseWriter, r *http.Request) {
+		done := make(chan int)
+		for i := 0; i < runtime.NumCPU(); i++ {
+			go func() {
+				for {
+					select {
+					case <-done:
+						return
+					default:
+					}
+				}
+			}()
+		}
+		time.Sleep(time.Second * 5)
+		close(done)
+	})
+
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
