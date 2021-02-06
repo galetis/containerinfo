@@ -28,7 +28,7 @@ func main() {
 	log.Printf("Listening on: %d", port)
 
 	printInfo(os.Stdout)
-
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
 		printInfo(w)
