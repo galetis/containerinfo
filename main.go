@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -27,15 +28,20 @@ func main() {
 
 		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
 
-		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
-
-
 		fmt.Fprintln(w, "Headers")
-		for k, v := range r.Header {
-			fmt.Fprintln(w, "\t \t", k, v)
+
+		keys := []string{}
+		for k := range r.Header {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			fmt.Fprintln(w, "\t \t", k, r.Header.Get(k))
 		}
 
 		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
+		fmt.Fprintln(w, "RequestURI \t "+r.RequestURI)
 
 		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
 	})
