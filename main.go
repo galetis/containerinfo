@@ -2,14 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/mem"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -27,13 +23,18 @@ func main() {
 
 	log.Printf("Listening on: %d", port)
 
-	printInfo(os.Stdout)
-	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
-		printInfo(w)
-		fmt.Fprint(w, "\n")
-		fmt.Fprintln(w, "Request.Host \t "+r.Host)
+		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
+
+		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
+
+
+		fmt.Fprintln(w, "Headers")
+		for k, v := range r.Header {
+			fmt.Fprintln(w, "\t \t", k, v)
+		}
+
 		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
 
 		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
@@ -57,36 +58,6 @@ func main() {
 	})
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
-}
-
-func printInfo(w io.Writer) {
-	v, _ := mem.VirtualMemory()
-	hostinfo, _ := host.Info()
-
-	minfo := fmt.Sprintf("Total: %v, Free:%v, UsedPercent:%f%%", ByteCountDecimal(v.Total), ByteCountDecimal(v.Free), v.UsedPercent)
-
-	info := map[string]string{
-		"Environ":       strings.Join(os.Environ(), " - "),
-		"Go.Version":    runtime.Version(),
-		"Go.NumCpu":     strconv.Itoa(runtime.NumCPU()),
-		"Host.Id":       hostinfo.HostID,
-		"Host.Os":       hostinfo.OS,
-		"Host.Hostname": hostinfo.Hostname,
-		"Host.Uptime":   strconv.FormatUint(hostinfo.Uptime, 10),
-		"Host.Procs":    strconv.FormatUint(hostinfo.Procs, 10),
-		"Host.Platform": fmt.Sprintf("%s %s", hostinfo.Platform, hostinfo.PlatformVersion),
-		"Memory":        minfo,
-	}
-
-	var keys []string
-	for k := range info {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		_, _ = fmt.Fprintln(w, k, " \t ", info[k])
-	}
 }
 
 func ByteCountDecimal(b uint64) string {
