@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,8 +13,14 @@ import (
 	"time"
 )
 
+var port int
+
+func init()  {
+	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
+	flag.Parse()
+}
+
 func main() {
-	port := 80
 
 	i, err := strconv.Atoi(os.Getenv("PORT"))
 	if err == nil {
@@ -66,15 +73,13 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
-func ByteCountDecimal(b uint64) string {
-	const unit = 1000
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
+func lookupEnvOrInt(key string, defaultVal int) int {
+	if val, ok := os.LookupEnv(key); ok {
+		v, err := strconv.Atoi(val)
+		if err != nil {
+			log.Fatalf("LookupEnvOrInt[%s]: %v", key, err)
+		}
+		return v
 	}
-	div, exp := int64(unit), 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
+	return defaultVal
 }
