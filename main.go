@@ -3,74 +3,55 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/valyala/fasthttp"
 	"log"
-	"net/http"
 	"os"
-	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var port int
+var start time.Time
 
-func init()  {
-	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
+func init() {
+	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 8080), "port")
 	flag.Parse()
 }
 
+func handler(ctx *fasthttp.RequestCtx) {
+
+	w := ctx.Response.BodyWriter()
+
+	hostname,_ := os.Hostname()
+	
+	fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
+	fmt.Fprintln(w, "Hostname \t "+hostname)
+
+	fmt.Fprintln(w, "Headers")
+
+	ctx.Request.Header.VisitAll(func(key, value []byte) {
+		fmt.Fprintln(w, "\t \t", string(key), string(value))
+	})
+
+	fmt.Fprintln(w, "Request.Addr \t "+ctx.RemoteAddr().String())
+	fmt.Fprintln(w, "RequestURI \t "+ctx.URI().String())
+
+	fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
+}
+
 func main() {
+
+	start = time.Now()
 
 	i, err := strconv.Atoi(os.Getenv("PORT"))
 	if err == nil {
 		port = i
 	}
 
-	start := time.Now()
-
 	log.Printf("Listening on: %d", port)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-
-		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
-
-		fmt.Fprintln(w, "Headers")
-
-		keys := []string{}
-		for k := range r.Header {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-
-		for _, k := range keys {
-			fmt.Fprintln(w, "\t \t", k, r.Header.Get(k))
-		}
-
-		fmt.Fprintln(w, "Request.Addr \t "+r.RemoteAddr)
-		fmt.Fprintln(w, "RequestURI \t "+r.RequestURI)
-
-		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
-	})
-
-	http.HandleFunc("/load", func(w http.ResponseWriter, r *http.Request) {
-		done := make(chan int)
-		for i := 0; i < runtime.NumCPU(); i++ {
-			go func() {
-				for {
-					select {
-					case <-done:
-						return
-					default:
-					}
-				}
-			}()
-		}
-		time.Sleep(time.Second * 5)
-		close(done)
-	})
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(fasthttp.ListenAndServe(fmt.Sprintf(":%d", port), handler))
 }
 
 func lookupEnvOrInt(key string, defaultVal int) int {
