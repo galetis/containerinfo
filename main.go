@@ -15,7 +15,7 @@ var port int
 var start time.Time
 
 func init() {
-	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 8080), "port")
+	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
 	flag.Parse()
 }
 
@@ -24,7 +24,7 @@ func handler(ctx *fasthttp.RequestCtx) {
 	w := ctx.Response.BodyWriter()
 
 	hostname,_ := os.Hostname()
-	
+
 	fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
 	fmt.Fprintln(w, "Hostname \t "+hostname)
 
