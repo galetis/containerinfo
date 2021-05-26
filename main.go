@@ -38,6 +38,7 @@ func handler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintln(w, "RequestURI \t "+ctx.URI().String())
 
 	fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
+	
 }
 
 func main() {
