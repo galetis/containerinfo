@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"github.com/valyala/fasthttp"
@@ -12,10 +13,18 @@ import (
 )
 
 var port int
+var tlsPort int
 var start time.Time
+
+//go:embed cert.pem
+var cert []byte
+
+//go:embed cert-key.pem
+var key []byte
 
 func init() {
 	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
+	flag.IntVar(&tlsPort, "tlsport", lookupEnvOrInt("TLS_PORT", 443), "tlsport")
 	flag.Parse()
 }
 
@@ -23,7 +32,7 @@ func handler(ctx *fasthttp.RequestCtx) {
 
 	w := ctx.Response.BodyWriter()
 
-	hostname,_ := os.Hostname()
+	hostname, _ := os.Hostname()
 
 	fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
 	fmt.Fprintln(w, "Hostname \t "+hostname)
@@ -38,7 +47,7 @@ func handler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintln(w, "RequestURI \t "+ctx.URI().String())
 
 	fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
-	
+
 }
 
 func main() {
@@ -51,6 +60,11 @@ func main() {
 	}
 
 	log.Printf("Listening on: %d", port)
+	log.Printf("Listening tls on: %d", tlsPort)
+
+	go func() {
+		log.Fatal(fasthttp.ListenAndServeTLSEmbed(fmt.Sprintf(":%d", tlsPort), cert, key, handler))
+	}()
 
 	log.Fatal(fasthttp.ListenAndServe(fmt.Sprintf(":%d", port), handler))
 }
