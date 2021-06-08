@@ -14,6 +14,8 @@ import (
 
 var port int
 var tlsPort int
+var hello bool
+
 var start time.Time
 
 //go:embed cert.pem
@@ -22,31 +24,43 @@ var cert []byte
 //go:embed cert-key.pem
 var key []byte
 
+var hostname string
+
 func init() {
 	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
 	flag.IntVar(&tlsPort, "tlsport", lookupEnvOrInt("TLS_PORT", 443), "tlsport")
+	flag.BoolVar(&hello, "hello", false, "hello")
 	flag.Parse()
+
+	hostname, _ = os.Hostname()
 }
 
 func handler(ctx *fasthttp.RequestCtx) {
 
 	w := ctx.Response.BodyWriter()
 
-	hostname, _ := os.Hostname()
 
-	fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
-	fmt.Fprintln(w, "Hostname \t "+hostname)
+	if hello {
 
-	fmt.Fprintln(w, "Headers")
+		//fmt.Fprintln(w, hostname)
+		ctx.WriteString(hostname)
 
-	ctx.Request.Header.VisitAll(func(key, value []byte) {
-		fmt.Fprintln(w, "\t \t", string(key), string(value))
-	})
+	} else {
 
-	fmt.Fprintln(w, "Request.Addr \t "+ctx.RemoteAddr().String())
-	fmt.Fprintln(w, "RequestURI \t "+ctx.URI().String())
+		fmt.Fprintln(w, "Environ \t "+strings.Join(os.Environ(), "-"))
+		fmt.Fprintln(w, "Hostname \t "+hostname)
 
-	fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
+		fmt.Fprintln(w, "Headers")
+
+		ctx.Request.Header.VisitAll(func(key, value []byte) {
+			fmt.Fprintln(w, "\t \t", string(key), string(value))
+		})
+
+		fmt.Fprintln(w, "Request.Addr \t "+ctx.RemoteAddr().String())
+		fmt.Fprintln(w, "RequestURI \t "+ctx.URI().String())
+
+		fmt.Fprintln(w, "Uptime \t\t "+time.Now().Sub(start).String())
+	}
 
 }
 
