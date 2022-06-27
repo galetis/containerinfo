@@ -1,4 +1,4 @@
-module whoami
+module github.com/galetis/whoami
 
 go 1.16
 
