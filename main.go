@@ -1,53 +1,43 @@
 package main
 
 import (
-	_ "embed"
-	"flag"
 	"fmt"
+	"log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/valyala/fasthttp"
-	"log"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
-var port int
-var tlsPort int
-var hello bool
-
 var start time.Time
-
-//go:embed cert.pem
-var cert []byte
-
-//go:embed cert-key.pem
-var key []byte
-
 var hostname string
 
 func init() {
-	flag.IntVar(&port, "port", lookupEnvOrInt("PORT", 80), "port")
-	flag.IntVar(&tlsPort, "tlsport", lookupEnvOrInt("TLS_PORT", 443), "tlsport")
-	flag.BoolVar(&hello, "hello", false, "hello")
-	flag.Parse()
-
 	hostname, _ = os.Hostname()
+}
+
+func main() {
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		port = "80"
+	}
+
+	if err := fasthttp.ListenAndServe(fmt.Sprintf(":%s", port), handler); err != nil {
+		log.Fatalf("Error in ListenAndServe: %v", err)
+	}
 }
 
 func handler(ctx *fasthttp.RequestCtx) {
 
-	w := ctx.Response.BodyWriter()
-
-	if hello {
-
-		//fmt.Fprintln(w, hostname)
+	switch string(ctx.Path()) {
+	case "/echo":
 		ctx.WriteString(hostname)
-
-	} else {
+	default:
+		w := ctx.Response.BodyWriter()
 
 		cinfo, _ := cpu.Info()
 		vm, _ := mem.VirtualMemory()
@@ -94,37 +84,6 @@ func handler(ctx *fasthttp.RequestCtx) {
 			host.VirtualizationRole,
 			host.VirtualizationSystem)
 	}
-
-}
-
-func main() {
-
-	start = time.Now()
-
-	i, err := strconv.Atoi(os.Getenv("PORT"))
-	if err == nil {
-		port = i
-	}
-
-	log.Printf("Listening on: %d", port)
-	log.Printf("Listening tls on: %d", tlsPort)
-
-	go func() {
-		log.Fatal(fasthttp.ListenAndServeTLSEmbed(fmt.Sprintf(":%d", tlsPort), cert, key, handler))
-	}()
-
-	log.Fatal(fasthttp.ListenAndServe(fmt.Sprintf(":%d", port), handler))
-}
-
-func lookupEnvOrInt(key string, defaultVal int) int {
-	if val, ok := os.LookupEnv(key); ok {
-		v, err := strconv.Atoi(val)
-		if err != nil {
-			log.Fatalf("LookupEnvOrInt[%s]: %v", key, err)
-		}
-		return v
-	}
-	return defaultVal
 }
 
 func byteCountSI(b uint64) string {
